@@ -1,0 +1,22 @@
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bank
+    ports:
+      - "5432:5432"
+
+  migration:
+    image: flyway/flyway
+    depends_on:
+      - postgres
+    command: -connectRetries=60 migrate
+    volumes:
+      - ./db/migration/sql:/flyway/sql
+      - ./db/migration/conf:/flyway/conf
+
