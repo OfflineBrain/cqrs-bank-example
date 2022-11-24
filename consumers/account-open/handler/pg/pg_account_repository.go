@@ -2,7 +2,9 @@ package pg
 
 import (
 	"account-open/handler"
+	"context"
 	"database/sql"
+	"io"
 )
 
 type AccountRepository struct {
@@ -15,16 +17,37 @@ func NewAccountRepository(conn *sql.DB) *AccountRepository {
 
 func (a *AccountRepository) Save(account handler.Account) error {
 
-	prepare, err := a.conn.Prepare(`INSERT INTO account(id, holder_name, balance, active) VALUES ($1, $2, $3, $4)`)
+	tx, err := a.conn.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: sql.LevelWriteCommitted,
+		ReadOnly:  false,
+	})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`INSERT INTO account(id, holder_name, balance, active) VALUES ($1, $2, $3, $4)`)
+	defer closeIgnoring(stmt)
+
 	if err != nil {
 		return err
 	}
 
-	ex, err := prepare.Exec(account.Id, account.HolderName, account.Balance, account.Active)
+	ex, err := stmt.Exec(account.Id, account.HolderName, account.Balance, account.Active)
 	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
 	print(ex)
 	return nil
+}
+
+func closeIgnoring(closer io.Closer) {
+	_ = closer.Close()
 }
