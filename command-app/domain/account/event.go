@@ -14,8 +14,8 @@ const (
 const (
 	OpenAccountTopic         = "account-open"
 	CloseAccountTopic        = "account-close"
-	DepositToAccountTopic    = "account-deposit"
-	WithdrawFromAccountTopic = "account-withdraw"
+	DepositToAccountTopic    = "account-funds"
+	WithdrawFromAccountTopic = "account-funds"
 )
 
 var Topics = map[string]string{
