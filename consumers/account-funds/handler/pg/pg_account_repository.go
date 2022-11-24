@@ -17,7 +17,7 @@ func NewAccountRepository(conn *sql.DB) *AccountRepository {
 func (a *AccountRepository) IncreaseBalance(id string, amount uint64) error {
 
 	tx, err := a.conn.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelWriteCommitted,
+		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
 	if err != nil {
@@ -25,12 +25,11 @@ func (a *AccountRepository) IncreaseBalance(id string, amount uint64) error {
 	}
 	defer tx.Rollback()
 
-	updateStmt, err := tx.Prepare(`UPDATE account SET balance = balance + $1 WHERE id == $2`)
-	defer closeIgnoring(updateStmt)
-
+	updateStmt, err := tx.Prepare(`UPDATE account SET balance = balance + $1 WHERE id = $2`)
 	if err != nil {
 		return err
 	}
+	defer closeIgnoring(updateStmt)
 
 	ex, err := updateStmt.Exec(amount, id)
 	if err != nil {
@@ -50,7 +49,7 @@ func (a *AccountRepository) IncreaseBalance(id string, amount uint64) error {
 func (a *AccountRepository) DecreaseBalance(id string, amount uint64) error {
 
 	tx, err := a.conn.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelWriteCommitted,
+		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
 	if err != nil {
@@ -58,12 +57,11 @@ func (a *AccountRepository) DecreaseBalance(id string, amount uint64) error {
 	}
 	defer tx.Rollback()
 
-	updateStmt, err := tx.Prepare(`UPDATE account SET balance = balance - $1 WHERE id == $2`)
-	defer closeIgnoring(updateStmt)
-
+	updateStmt, err := tx.Prepare(`UPDATE account SET balance = balance - $1 WHERE id = $2`)
 	if err != nil {
 		return err
 	}
+	defer closeIgnoring(updateStmt)
 
 	ex, err := updateStmt.Exec(amount, id)
 	if err != nil {

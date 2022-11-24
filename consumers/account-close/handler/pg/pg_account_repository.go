@@ -17,7 +17,7 @@ func NewAccountRepository(conn *sql.DB) *AccountRepository {
 func (a *AccountRepository) SetInactive(id string) error {
 
 	tx, err := a.conn.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelWriteCommitted,
+		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
 	if err != nil {
@@ -25,12 +25,11 @@ func (a *AccountRepository) SetInactive(id string) error {
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.Prepare(`UPDATE account SET active = false WHERE id == $1`)
-	defer closeIgnoring(stmt)
-
+	stmt, err := tx.Prepare(`UPDATE account SET active = false WHERE id = $1`)
 	if err != nil {
 		return err
 	}
+	defer closeIgnoring(stmt)
 
 	ex, err := stmt.Exec(id)
 	if err != nil {

@@ -8,9 +8,20 @@ Content-Type: application/json
 }
 ###
 
-POST http://localhost:8080/api/v1/accounts/c6cfa36c-7348-4ff5-b9db-aa46250d13ee/deposit
+POST http://localhost:8080/api/v1/accounts/fcee118a-8389-4768-bf3d-9f594def5c2a/deposit
 Content-Type: application/json
 
 {
   "amount": 100
 }
+###
+
+POST http://localhost:8080/api/v1/accounts/fcee118a-8389-4768-bf3d-9f594def5c2a/withdraw
+Content-Type: application/json
+
+{
+  "amount": 200
+}
+###
+
+DELETE http://localhost:8080/api/v1/accounts/fcee118a-8389-4768-bf3d-9f594def5c2a

@@ -18,7 +18,7 @@ func NewAccountRepository(conn *sql.DB) *AccountRepository {
 func (a *AccountRepository) Save(account handler.Account) error {
 
 	tx, err := a.conn.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelWriteCommitted,
+		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  false,
 	})
 	if err != nil {
@@ -27,11 +27,10 @@ func (a *AccountRepository) Save(account handler.Account) error {
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`INSERT INTO account(id, holder_name, balance, active) VALUES ($1, $2, $3, $4)`)
-	defer closeIgnoring(stmt)
-
 	if err != nil {
 		return err
 	}
+	defer closeIgnoring(stmt)
 
 	ex, err := stmt.Exec(account.Id, account.HolderName, account.Balance, account.Active)
 	if err != nil {
