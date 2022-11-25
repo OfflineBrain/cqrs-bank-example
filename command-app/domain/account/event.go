@@ -9,6 +9,7 @@ const (
 	CloseAccountV1        = "closeAccountV1"
 	DepositToAccountV1    = "depositToAccountV1"
 	WithdrawFromAccountV1 = "withdrawFromAccountV1"
+	ClearEvent            = "clear"
 )
 
 func Topics(topic string) map[string]string {
@@ -17,6 +18,7 @@ func Topics(topic string) map[string]string {
 		CloseAccountV1:        topic,
 		DepositToAccountV1:    topic,
 		WithdrawFromAccountV1: topic,
+		ClearEvent:            topic,
 	}
 }
 
@@ -49,4 +51,11 @@ type WithdrawV1 struct {
 
 func NewWithdrawEventV1(id string, v1 WithdrawV1) *base.Event {
 	return base.NewEvent(id, WithdrawFromAccountV1, v1)
+}
+
+type Clear struct {
+}
+
+func NewClearEvent(id string) *base.Event {
+	return base.NewEvent(id, ClearEvent, Clear{})
 }

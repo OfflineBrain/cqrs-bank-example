@@ -22,6 +22,10 @@ func (e *AggregateRepository) Save(ctx context.Context, aggregate *Aggregate) er
 	return e.AggregateRepositoryBase.Save(ctx, aggregate)
 }
 
+func (e *AggregateRepository) GetIds() []string {
+	return e.AggregateRepositoryBase.GetIds(AggregateType)
+}
+
 func aggregate(id string) *Aggregate {
 	return &Aggregate{
 		AggregateRoot: base.AggregateRoot{Id: id, Version: -1},

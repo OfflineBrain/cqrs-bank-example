@@ -7,11 +7,12 @@ import (
 )
 
 type CommandHandler struct {
-	storage infrastructure.AggregateRepository[*Aggregate]
+	storage    infrastructure.AggregateRepository[*Aggregate]
+	eventStore *infrastructure.EventStore
 }
 
-func NewCommandHandler(storage infrastructure.AggregateRepository[*Aggregate]) *CommandHandler {
-	return &CommandHandler{storage: storage}
+func NewCommandHandler(storage infrastructure.AggregateRepository[*Aggregate], store *infrastructure.EventStore) *CommandHandler {
+	return &CommandHandler{storage: storage, eventStore: store}
 }
 
 func (c *CommandHandler) handleOpenAccountCommand(ctx context.Context, cmd base.Command) error {
@@ -49,9 +50,18 @@ func (c *CommandHandler) handleCloseAccountCommand(ctx context.Context, cmd base
 	return c.storage.Save(ctx, acc)
 }
 
+func (c *CommandHandler) handleReplay(ctx context.Context, _ base.Command) error {
+	err := c.eventStore.RepublishEvents(ctx, AggregateType, NewClearEvent)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *CommandHandler) Register(dispatcher infrastructure.CommandDispatcher) {
 	_ = dispatcher.Register(OpenAccountCommandName, c.handleOpenAccountCommand)
 	_ = dispatcher.Register(DepositFundsCommandName, c.handleDepositFundsCommand)
 	_ = dispatcher.Register(WithdrawFundsCommandName, c.handleWithdrawFundsCommand)
 	_ = dispatcher.Register(CloseAccountCommandName, c.handleCloseAccountCommand)
+	_ = dispatcher.Register(ReplayCommandName, c.handleReplay)
 }

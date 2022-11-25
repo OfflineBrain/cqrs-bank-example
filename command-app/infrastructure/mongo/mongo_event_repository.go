@@ -12,6 +12,21 @@ type MongoEventRepository struct {
 	collection *mongo.Collection
 }
 
+func (m *MongoEventRepository) GetAggregateIds(aggregateType string) []string {
+	filter := bson.D{{"aggregate_type", aggregateType}}
+	distinct, err := m.collection.Distinct(context.Background(), "aggregate_id", filter)
+	if err != nil {
+		return []string{}
+	}
+
+	ids := make([]string, len(distinct))
+	for i, id := range distinct {
+		ids[i] = id.(string)
+	}
+
+	return ids
+}
+
 func (m *MongoEventRepository) FindByAggregateId(id string) []base.EventModel {
 	filter := bson.D{{"aggregate_id", id}}
 

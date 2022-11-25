@@ -5,6 +5,7 @@ type AccountRepository interface {
 	IncreaseBalance(id string, amount uint64) error
 	DecreaseBalance(id string, amount uint64) error
 	SetInactive(id string) error
+	Delete(id string) error
 }
 
 type NoOpAccountRepository struct {
@@ -23,5 +24,9 @@ func (m *NoOpAccountRepository) DecreaseBalance(_ string, _ uint64) error {
 }
 
 func (m *NoOpAccountRepository) Save(_ Account) error {
+	return nil
+}
+
+func (m *NoOpAccountRepository) Delete(string) error {
 	return nil
 }

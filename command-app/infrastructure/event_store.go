@@ -71,3 +71,52 @@ func (s *EventStore) GetEvents(aggregateId string) ([]base.Event, error) {
 
 	return events, nil
 }
+
+func (s *EventStore) GetAggregateIds(aggregateType string) []string {
+	return s.repository.GetAggregateIds(aggregateType)
+}
+
+func (s *EventStore) RepublishEvents(
+	ctx context.Context,
+	aggregateType string,
+	clearEvent func(id string) *base.Event,
+) error {
+	log := l.Logger.WithField(TraceIdKey, ctx.Value(TraceIdKey))
+	ids := s.GetAggregateIds(aggregateType)
+	log.Infof("republishing events for %d %s aggregates", len(ids), aggregateType)
+	for _, id := range ids {
+		event := clearEvent(id)
+		err := s.publisher.Publish(ctx, s.topics[event.Type], base.EventModel{
+			Event:         *event,
+			AggregateType: aggregateType,
+			AggregateId:   id,
+			Date:          time.Now(),
+			Version:       -1,
+		})
+		if err != nil {
+			return err
+		}
+		eventStream := s.repository.FindByAggregateId(id)
+		if eventStream == nil {
+			return errors.New("incorrect account id")
+		}
+		log.Infof("republishing %d events for %s aggregate [%s]", len(eventStream), aggregateType, id)
+
+		err = s.republish(ctx, eventStream)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *EventStore) republish(ctx context.Context, events []base.EventModel) error {
+
+	for _, event := range events {
+		err := s.publisher.Publish(ctx, s.topics[event.Type], event)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

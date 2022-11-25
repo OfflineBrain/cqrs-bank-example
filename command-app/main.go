@@ -45,7 +45,7 @@ func main() {
 
 	dispatcher := infrastructure.NewCommandDispatcher()
 
-	account.NewCommandHandler(accountRepository).Register(*dispatcher)
+	account.NewCommandHandler(accountRepository, eventStore).Register(*dispatcher)
 
 	engine := gin.Default()
 
@@ -57,6 +57,10 @@ func main() {
 			v1.POST("/accounts/:id/deposit", rest.NewAccountDepositHandler(dispatcher))
 			v1.POST("/accounts/:id/withdraw", rest.NewAccountWithdrawHandler(dispatcher))
 			v1.DELETE("/accounts/:id", rest.NewCloseAccountHandler(dispatcher))
+		}
+		evensApi := api.Group("/events")
+		{
+			evensApi.POST("accounts/replay", rest.NewReplayAccountHandler(dispatcher))
 		}
 	}
 

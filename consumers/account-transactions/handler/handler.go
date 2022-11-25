@@ -31,6 +31,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 			return err
 		}
 		return d.repository.DecreaseBalance(model.AggregateId, event.Amount)
+
 	case DepositToAccountV1:
 		log.Debugf("received %s event", DepositToAccountV1)
 		var event DepositV1
@@ -39,6 +40,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 			return err
 		}
 		return d.repository.IncreaseBalance(model.AggregateId, event.Amount)
+
 	case OpenAccountV1:
 		log.Debugf("received %s event", OpenAccountV1)
 		var event OpenV1
@@ -54,6 +56,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 			Active:     true,
 		}
 		return d.repository.Save(*a)
+
 	case CloseAccountV1:
 		log.Debugf("received %s event", CloseAccountV1)
 		var event CloseV1
@@ -62,6 +65,11 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 			return err
 		}
 		return d.repository.SetInactive(model.AggregateId)
+
+	case ClearEvent:
+		log.Debugf("received %s event", ClearEvent)
+		return d.repository.Delete(model.AggregateId)
+
 	default:
 		return errors.New("event type cannot be handled")
 	}

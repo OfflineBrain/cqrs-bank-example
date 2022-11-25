@@ -5,6 +5,7 @@ const (
 	DepositFundsCommandName  = "DepositFundsCommand"
 	WithdrawFundsCommandName = "WithdrawFundsCommand"
 	CloseAccountCommandName  = "CloseAccountCommand"
+	ReplayCommandName        = "ReplayAccountsCommand"
 )
 
 type OpenAccountCommand struct {
@@ -42,4 +43,11 @@ type CloseAccountCommand struct {
 
 func (c CloseAccountCommand) GetName() string {
 	return CloseAccountCommandName
+}
+
+type ReplayCommand struct {
+}
+
+func (r ReplayCommand) GetName() string {
+	return ReplayCommandName
 }

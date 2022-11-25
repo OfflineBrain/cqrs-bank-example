@@ -99,6 +99,27 @@ func (a *AccountRepository) SetInactive(id string) error {
 	return nil
 }
 
+func (a *AccountRepository) Delete(id string) error {
+	err := RunInTx(context.Background(), a.conn, func(ctx context.Context, tx *sql.Tx) error {
+		stmt, err := tx.Prepare(`DELETE FROM account WHERE id = $1`)
+		if err != nil {
+			return err
+		}
+		defer closeIgnoring(stmt)
+
+		_, err = stmt.Exec(id)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func closeIgnoring(closer io.Closer) {
 	_ = closer.Close()
 }

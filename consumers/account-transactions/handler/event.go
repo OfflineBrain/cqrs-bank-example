@@ -7,6 +7,7 @@ const (
 	DepositToAccountV1    = "depositToAccountV1"
 	WithdrawFromAccountV1 = "withdrawFromAccountV1"
 	CloseAccountV1        = "closeAccountV1"
+	ClearEvent            = "clear"
 )
 
 const TraceIdKey = "trace_id"

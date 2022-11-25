@@ -9,6 +9,7 @@ type AggregateRepository[A base.Aggregate] interface {
 	Exist(id string) bool
 	Get(id string) (A, error)
 	Save(ctx context.Context, aggregate A) error
+	GetIds() []string
 }
 
 type AggregateRepositoryBase[A base.Aggregate] struct {
@@ -47,4 +48,8 @@ func (e *AggregateRepositoryBase[A]) Get(id string) (A, error) {
 
 	aggregate.Replay(events)
 	return aggregate, nil
+}
+
+func (e *AggregateRepositoryBase[A]) GetIds(aggregateType string) []string {
+	return e.store.GetAggregateIds(aggregateType)
 }
