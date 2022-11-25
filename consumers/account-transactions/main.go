@@ -32,7 +32,16 @@ func main() {
 		panic(err)
 	}
 
-	connection, err := pg.NewPgConnection(cfg.PgHost, cfg.PgPort, cfg.PgUser, cfg.PgPassword, cfg.PgDatabase)
+	connString := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable application_name=%s",
+		cfg.PgHost,
+		cfg.PgPort,
+		cfg.PgUser,
+		cfg.PgPassword,
+		cfg.PgDatabase,
+		cfg.ServiceName,
+	)
+	connection, err := pg.NewPgConnection(connString)
 	if err != nil {
 		panic(err)
 	}
