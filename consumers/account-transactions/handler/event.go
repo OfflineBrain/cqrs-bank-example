@@ -1,13 +1,20 @@
 package handler
 
-import (
-	"time"
-)
+import "time"
 
 const (
+	OpenAccountV1         = "openAccountV1"
 	DepositToAccountV1    = "depositToAccountV1"
 	WithdrawFromAccountV1 = "withdrawFromAccountV1"
+	CloseAccountV1        = "closeAccountV1"
 )
+
+const TraceIdKey = "trace_id"
+
+type TracedEventModel struct {
+	TraceId    string `json:"trace_id"`
+	EventModel `json:"event_model"`
+}
 
 type EventModel struct {
 	Event         `json:"event"`
@@ -24,10 +31,17 @@ type Event struct {
 	Data []byte `json:"data"`
 }
 
+type OpenV1 struct {
+	HolderName string `json:"holder_name"`
+}
+
 type DepositV1 struct {
 	Amount uint64 `json:"amount"`
 }
 
 type WithdrawV1 struct {
 	Amount uint64 `json:"amount"`
+}
+
+type CloseV1 struct {
 }

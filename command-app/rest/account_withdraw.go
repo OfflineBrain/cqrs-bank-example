@@ -1,9 +1,12 @@
 package rest
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/domain/account"
+	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 	"net/http"
 )
 
@@ -13,6 +16,7 @@ type WithdrawRequest struct {
 
 func NewAccountWithdrawHandler(dispatcher base.CommandDispatcher) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		ctx := context.WithValue(context.Background(), infrastructure.TraceIdKey, "withdraw-"+uuid.New().String())
 		method := c.Request.Method
 		if method != http.MethodPost {
 			c.Status(http.StatusMethodNotAllowed)
@@ -28,17 +32,15 @@ func NewAccountWithdrawHandler(dispatcher base.CommandDispatcher) func(c *gin.Co
 		}
 
 		command := account.WithdrawFundsCommand{
-			CommandBase: base.CommandBase{
-				Id: id,
-			},
-			Amount: request.Amount,
+			AccountId: id,
+			Amount:    request.Amount,
 		}
 
-		if err := dispatcher.Send(command); err != nil {
+		if err := dispatcher.Send(ctx, command); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"id": command.Id})
+		c.Status(http.StatusAccepted)
 	}
 }

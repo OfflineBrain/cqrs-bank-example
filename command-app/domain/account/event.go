@@ -12,22 +12,18 @@ const (
 )
 
 const (
-	OpenAccountTopic         = "account-open"
-	CloseAccountTopic        = "account-close"
-	DepositToAccountTopic    = "account-funds"
-	WithdrawFromAccountTopic = "account-funds"
+	TopicAccountTransactions = "account-transactions"
 )
 
 var Topics = map[string]string{
-	OpenAccountV1:         OpenAccountTopic,
-	CloseAccountV1:        CloseAccountTopic,
-	DepositToAccountV1:    DepositToAccountTopic,
-	WithdrawFromAccountV1: WithdrawFromAccountTopic,
+	OpenAccountV1:         TopicAccountTransactions,
+	CloseAccountV1:        TopicAccountTransactions,
+	DepositToAccountV1:    TopicAccountTransactions,
+	WithdrawFromAccountV1: TopicAccountTransactions,
 }
 
 type OpenV1 struct {
 	HolderName string `json:"holder_name"`
-	Balance    uint64 `json:"balance"`
 }
 
 func NewOpenEventV1(id string, v1 OpenV1) *base.Event {

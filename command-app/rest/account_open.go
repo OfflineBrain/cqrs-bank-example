@@ -1,10 +1,12 @@
 package rest
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/domain/account"
+	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 	"net/http"
 )
 
@@ -16,6 +18,7 @@ type OpenAccountRequest struct {
 
 func NewAccountCreateHandler(dispatcher base.CommandDispatcher) func(c *gin.Context) {
 	return func(c *gin.Context) {
+		ctx := context.WithValue(context.Background(), infrastructure.TraceIdKey, "open-"+uuid.New().String())
 		method := c.Request.Method
 		if method != http.MethodPost {
 			c.Status(http.StatusMethodNotAllowed)
@@ -29,19 +32,17 @@ func NewAccountCreateHandler(dispatcher base.CommandDispatcher) func(c *gin.Cont
 		}
 
 		command := account.OpenAccountCommand{
-			CommandBase: base.CommandBase{
-				Id: uuid.New().String(),
-			},
+			AccountId:      uuid.New().String(),
 			HolderName:     request.HolderName,
 			AccountType:    request.AccountType,
 			OpeningBalance: request.OpeningBalance,
 		}
 
-		if err := dispatcher.Send(command); err != nil {
+		if err := dispatcher.Send(ctx, command); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"id": command.Id})
+		c.JSON(http.StatusCreated, gin.H{"id": command.AccountId})
 	}
 }

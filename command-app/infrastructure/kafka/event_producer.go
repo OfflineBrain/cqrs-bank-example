@@ -1,10 +1,12 @@
 package kafka
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
+	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 )
 
 type EventProducer struct {
@@ -15,8 +17,11 @@ func NewEventProducer(producer sarama.SyncProducer) *EventProducer {
 	return &EventProducer{producer: producer}
 }
 
-func (e *EventProducer) Publish(topic string, event base.EventModel) error {
-	bytes, err := json.Marshal(event)
+func (e *EventProducer) Publish(ctx context.Context, topic string, event base.EventModel) error {
+	bytes, err := json.Marshal(base.TracedEventModel{
+		TraceId:    ctx.Value(infrastructure.TraceIdKey).(string),
+		EventModel: event,
+	})
 	if err != nil {
 		return err
 	}

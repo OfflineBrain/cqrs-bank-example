@@ -1,7 +1,5 @@
 package account
 
-import "github.com/offlinebrain/cqrs-bank-example/command-app/base"
-
 const (
 	OpenAccountCommandName   = "OpenAccountCommand"
 	DepositFundsCommandName  = "DepositFundsCommand"
@@ -10,7 +8,7 @@ const (
 )
 
 type OpenAccountCommand struct {
-	base.CommandBase
+	AccountId      string
 	HolderName     string
 	AccountType    string
 	OpeningBalance uint64
@@ -21,8 +19,8 @@ func (o OpenAccountCommand) GetName() string {
 }
 
 type DepositFundsCommand struct {
-	base.CommandBase
-	Amount uint64
+	AccountId string
+	Amount    uint64
 }
 
 func (d DepositFundsCommand) GetName() string {
@@ -30,8 +28,8 @@ func (d DepositFundsCommand) GetName() string {
 }
 
 type WithdrawFundsCommand struct {
-	base.CommandBase
-	Amount uint64
+	AccountId string
+	Amount    uint64
 }
 
 func (w WithdrawFundsCommand) GetName() string {
@@ -39,7 +37,7 @@ func (w WithdrawFundsCommand) GetName() string {
 }
 
 type CloseAccountCommand struct {
-	base.CommandBase
+	AccountId string
 }
 
 func (c CloseAccountCommand) GetName() string {

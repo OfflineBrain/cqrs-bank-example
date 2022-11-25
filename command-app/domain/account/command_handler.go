@@ -1,6 +1,7 @@
 package account
 
 import (
+	"context"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 )
@@ -13,39 +14,39 @@ func NewCommandHandler(storage infrastructure.AggregateRepository[*Aggregate]) *
 	return &CommandHandler{storage: storage}
 }
 
-func (c *CommandHandler) handleOpenAccountCommand(cmd base.Command) error {
-	acc := OpenAccount(cmd.(OpenAccountCommand))
-	return c.storage.Save(acc)
+func (c *CommandHandler) handleOpenAccountCommand(ctx context.Context, cmd base.Command) error {
+	acc := OpenAccount(ctx, cmd.(OpenAccountCommand))
+	return c.storage.Save(ctx, acc)
 }
 
-func (c *CommandHandler) handleDepositFundsCommand(cmd base.Command) error {
+func (c *CommandHandler) handleDepositFundsCommand(ctx context.Context, cmd base.Command) error {
 	command := cmd.(DepositFundsCommand)
-	acc, _ := c.storage.Get(command.Id)
-	err := acc.DepositFunds(command.Amount)
+	acc, _ := c.storage.Get(command.AccountId)
+	err := acc.DepositFunds(ctx, command.Amount)
 	if err != nil {
 		return err
 	}
-	return c.storage.Save(acc)
+	return c.storage.Save(ctx, acc)
 }
 
-func (c *CommandHandler) handleWithdrawFundsCommand(cmd base.Command) error {
+func (c *CommandHandler) handleWithdrawFundsCommand(ctx context.Context, cmd base.Command) error {
 	command := cmd.(WithdrawFundsCommand)
-	acc, _ := c.storage.Get(command.Id)
-	err := acc.WithdrawFunds(command.Amount)
+	acc, _ := c.storage.Get(command.AccountId)
+	err := acc.WithdrawFunds(ctx, command.Amount)
 	if err != nil {
 		return err
 	}
-	return c.storage.Save(acc)
+	return c.storage.Save(ctx, acc)
 }
 
-func (c *CommandHandler) handleCloseAccountCommand(cmd base.Command) error {
+func (c *CommandHandler) handleCloseAccountCommand(ctx context.Context, cmd base.Command) error {
 	command := cmd.(CloseAccountCommand)
-	acc, _ := c.storage.Get(command.Id)
-	err := acc.Close()
+	acc, _ := c.storage.Get(command.AccountId)
+	err := acc.Close(ctx)
 	if err != nil {
 		return err
 	}
-	return c.storage.Save(acc)
+	return c.storage.Save(ctx, acc)
 }
 
 func (c *CommandHandler) Register(dispatcher infrastructure.CommandDispatcher) {

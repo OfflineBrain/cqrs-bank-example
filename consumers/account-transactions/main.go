@@ -1,8 +1,9 @@
 package main
 
 import (
-	"account-open/handler"
-	"account-open/handler/pg"
+	"account-transactions/handler"
+	"account-transactions/pg"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Shopify/sarama"
@@ -12,7 +13,7 @@ import (
 )
 
 func main() {
-	topic := "account-open"
+	topic := "account-transactions"
 	worker, err := connectConsumer([]string{"localhost:9092"})
 	if err != nil {
 		panic(err)
@@ -44,12 +45,14 @@ func main() {
 				fmt.Println(err)
 			case msg := <-consumer.Messages():
 				msgCount++
-				var model handler.EventModel
+				var model handler.TracedEventModel
 				err := json.Unmarshal(msg.Value, &model)
 				if err != nil {
 					fmt.Printf("err unmarshalling")
 				}
-				err = writeHandler.Handle(model)
+
+				ctx := context.WithValue(context.Background(), handler.TraceIdKey, model.TraceId)
+				err = writeHandler.Handle(ctx, model.EventModel)
 				if err != nil {
 					fmt.Printf("err saving %s \n", err.Error())
 				}

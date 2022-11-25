@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"errors"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"time"
@@ -17,6 +18,7 @@ func NewEventStore(repository EventRepository, publisher EventPublisher, topics 
 }
 
 func (s *EventStore) SaveEvents(
+	ctx context.Context,
 	aggregateId string,
 	aggregateType string,
 	events []base.Event,
@@ -41,7 +43,7 @@ func (s *EventStore) SaveEvents(
 		}
 		s.repository.Save(model)
 		topic := s.topics[event.Type]
-		_ = s.publisher.Publish(topic, *model)
+		_ = s.publisher.Publish(ctx, topic, *model)
 	}
 
 	return nil

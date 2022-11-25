@@ -1,6 +1,7 @@
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
@@ -27,10 +28,10 @@ func (a *Aggregate) GetBalance() uint64 {
 	return a.balance
 }
 
-func OpenAccount(command OpenAccountCommand) *Aggregate {
+func OpenAccount(ctx context.Context, command OpenAccountCommand) *Aggregate {
 	var a = &Aggregate{
 		AggregateRoot: base.AggregateRoot{
-			Id:      command.Id,
+			Id:      command.AccountId,
 			Version: -1,
 			Changes: []base.Event{},
 		},
@@ -38,14 +39,16 @@ func OpenAccount(command OpenAccountCommand) *Aggregate {
 		balance: command.OpeningBalance,
 		holder:  command.HolderName,
 	}
-	a.Raise(*NewOpenEventV1(command.Id, OpenV1{
+	a.Raise(*NewOpenEventV1(command.AccountId, OpenV1{
 		command.HolderName,
-		command.OpeningBalance,
+	}))
+	a.Raise(*NewDepositEventV1(command.AccountId, DepositV1{
+		Amount: command.OpeningBalance,
 	}))
 	return a
 }
 
-func (a *Aggregate) DepositFunds(amount uint64) error {
+func (a *Aggregate) DepositFunds(ctx context.Context, amount uint64) error {
 	if !a.active {
 		return errors.New("account is not active")
 	}
@@ -55,7 +58,7 @@ func (a *Aggregate) DepositFunds(amount uint64) error {
 	return nil
 }
 
-func (a *Aggregate) WithdrawFunds(amount uint64) error {
+func (a *Aggregate) WithdrawFunds(ctx context.Context, amount uint64) error {
 	if !a.active {
 		return errors.New("account is not active")
 	}
@@ -68,7 +71,7 @@ func (a *Aggregate) WithdrawFunds(amount uint64) error {
 	return nil
 }
 
-func (a *Aggregate) Close() error {
+func (a *Aggregate) Close(ctx context.Context) error {
 	if !a.active {
 		return errors.New("account is not active")
 	}
@@ -102,7 +105,7 @@ func (a *Aggregate) applyOpenV1(event base.Event) {
 	var data OpenV1
 	_ = json.Unmarshal(event.Data, &data)
 	a.active = true
-	a.balance = data.Balance
+	a.balance = 0
 	a.holder = data.HolderName
 }
 

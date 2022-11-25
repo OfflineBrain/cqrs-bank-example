@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"errors"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 )
@@ -24,9 +25,9 @@ func (c *CommandDispatcher) Register(cmd string, handler base.CommandHandler) er
 	return nil
 }
 
-func (c *CommandDispatcher) Send(cmd base.Command) error {
+func (c *CommandDispatcher) Send(ctx context.Context, cmd base.Command) error {
 	if handler := c.handlers[cmd.GetName()]; handler != nil {
-		return handler(cmd)
+		return handler(ctx, cmd)
 	}
 	return errors.New("handler for this command not found")
 }

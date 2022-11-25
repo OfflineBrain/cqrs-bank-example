@@ -1,11 +1,14 @@
 package infrastructure
 
-import "github.com/offlinebrain/cqrs-bank-example/command-app/base"
+import (
+	"context"
+	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
+)
 
 type AggregateRepository[A base.Aggregate] interface {
 	Exist(id string) bool
 	Get(id string) (A, error)
-	Save(aggregate A) error
+	Save(ctx context.Context, aggregate A) error
 }
 
 type AggregateRepositoryBase[A base.Aggregate] struct {
@@ -25,8 +28,8 @@ func (e *AggregateRepositoryBase[A]) Exist(id string) bool {
 	return true
 }
 
-func (e *AggregateRepositoryBase[A]) Save(a A) error {
-	err := e.store.SaveEvents(a.GetId(), a.GetType(), a.GetChanges(), a.GetVersion())
+func (e *AggregateRepositoryBase[A]) Save(ctx context.Context, a A) error {
+	err := e.store.SaveEvents(ctx, a.GetId(), a.GetType(), a.GetChanges(), a.GetVersion())
 	if err != nil {
 		return err
 	}

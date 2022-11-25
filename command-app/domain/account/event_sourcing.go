@@ -1,6 +1,7 @@
 package account
 
 import (
+	"context"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 )
@@ -17,8 +18,8 @@ func (e *AggregateRepository) Get(id string) (*Aggregate, error) {
 	return e.AggregateRepositoryBase.Get(id)
 }
 
-func (e *AggregateRepository) Save(aggregate *Aggregate) error {
-	return e.AggregateRepositoryBase.Save(aggregate)
+func (e *AggregateRepository) Save(ctx context.Context, aggregate *Aggregate) error {
+	return e.AggregateRepositoryBase.Save(ctx, aggregate)
 }
 
 func aggregate(id string) *Aggregate {

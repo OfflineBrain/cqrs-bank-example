@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type TracedEventModel struct {
+	TraceId    string `json:"trace_id"`
+	EventModel `json:"event_model"`
+}
+
 type EventModel struct {
 	Event         `bson:"event" json:"event"`
 	Id            string    `bson:"_id" json:"id"`
