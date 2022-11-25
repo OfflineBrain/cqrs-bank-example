@@ -1,11 +1,13 @@
 package main
 
 import (
+	"account-transactions/config"
 	"account-transactions/handler"
 	"account-transactions/log"
 	"account-transactions/pg"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/sirupsen/logrus"
 	"os"
@@ -14,16 +16,23 @@ import (
 )
 
 func main() {
+	cfg, err := config.LoadConfig(".")
+	if err != nil {
+		return
+	}
+
+	log.SetServiceName(cfg.ServiceName)
 	log.Logger.Logger.SetLevel(logrus.DebugLevel)
 	log.Logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 
-	topic := "account-transactions"
-	worker, err := connectConsumer([]string{"localhost:9092"})
+	topic := cfg.KafkaTopic
+	kafkaUri := fmt.Sprintf("%s:%d", cfg.KafkaHost, cfg.KafkaPort)
+	worker, err := connectConsumer([]string{kafkaUri})
 	if err != nil {
 		panic(err)
 	}
 
-	connection, err := pg.NewPgConnection("localhost", 5432, "root", "root", "bank")
+	connection, err := pg.NewPgConnection(cfg.PgHost, cfg.PgPort, cfg.PgUser, cfg.PgPassword, cfg.PgDatabase)
 	if err != nil {
 		panic(err)
 	}
@@ -77,13 +86,13 @@ func main() {
 }
 
 func connectConsumer(brokersUrl []string) (sarama.Consumer, error) {
-	config := sarama.NewConfig()
-	config.Consumer.Return.Errors = true
-	config.Net.Proxy.Enable = false
-	config.Net.TLS.Enable = false
+	cfg := sarama.NewConfig()
+	cfg.Consumer.Return.Errors = true
+	cfg.Net.Proxy.Enable = false
+	cfg.Net.TLS.Enable = false
 
 	// Create new consumer
-	conn, err := sarama.NewConsumer(brokersUrl, config)
+	conn, err := sarama.NewConsumer(brokersUrl, cfg)
 	if err != nil {
 		return nil, err
 	}

@@ -11,15 +11,13 @@ const (
 	WithdrawFromAccountV1 = "withdrawFromAccountV1"
 )
 
-const (
-	TopicAccountTransactions = "account-transactions"
-)
-
-var Topics = map[string]string{
-	OpenAccountV1:         TopicAccountTransactions,
-	CloseAccountV1:        TopicAccountTransactions,
-	DepositToAccountV1:    TopicAccountTransactions,
-	WithdrawFromAccountV1: TopicAccountTransactions,
+func Topics(topic string) map[string]string {
+	return map[string]string{
+		OpenAccountV1:         topic,
+		CloseAccountV1:        topic,
+		DepositToAccountV1:    topic,
+		WithdrawFromAccountV1: topic,
+	}
 }
 
 type OpenV1 struct {
