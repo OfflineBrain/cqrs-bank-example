@@ -2,17 +2,21 @@ package main
 
 import (
 	"account-transactions/handler"
+	"account-transactions/log"
 	"account-transactions/pg"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
+	log.Logger.Logger.SetLevel(logrus.DebugLevel)
+	log.Logger.Logger.SetFormatter(&logrus.JSONFormatter{})
+
 	topic := "account-transactions"
 	worker, err := connectConsumer([]string{"localhost:9092"})
 	if err != nil {
@@ -31,7 +35,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Consumer started ")
+	log.Logger.Infof("Consumer started ")
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	msgCount := 0
@@ -42,30 +46,30 @@ func main() {
 		for {
 			select {
 			case err := <-consumer.Errors():
-				fmt.Println(err)
+				log.Logger.Error(err)
 			case msg := <-consumer.Messages():
 				msgCount++
 				var model handler.TracedEventModel
 				err := json.Unmarshal(msg.Value, &model)
 				if err != nil {
-					fmt.Printf("err unmarshalling")
+					log.Logger.Errorf("err unmarshalling %s", err)
 				}
-
+				l := log.Logger.WithField(handler.TraceIdKey, model.TraceId)
 				ctx := context.WithValue(context.Background(), handler.TraceIdKey, model.TraceId)
 				err = writeHandler.Handle(ctx, model.EventModel)
 				if err != nil {
-					fmt.Printf("err saving %s \n", err.Error())
+					l.Errorf("err saving %s \n", err.Error())
 				}
-				fmt.Printf("Received message Count %d: | Topic(%s) | Message(%s) \n", msgCount, msg.Topic, string(msg.Value))
+				l.Infof("Received message Count %d: | Topic(%s) | Message(%s) \n", msgCount, msg.Topic, string(msg.Value))
 			case <-sigchan:
-				fmt.Println("Interrupt is detected")
+				log.Logger.Infof("Interrupt is detected")
 				doneCh <- struct{}{}
 			}
 		}
 	}()
 
 	<-doneCh
-	fmt.Println("Processed", msgCount, "messages")
+	log.Logger.Info("Processed", msgCount, "messages")
 
 	if err := worker.Close(); err != nil {
 		panic(err)

@@ -3,10 +3,11 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/Shopify/sarama"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
+	"github.com/sirupsen/logrus"
 )
 
 type EventProducer struct {
@@ -18,6 +19,11 @@ func NewEventProducer(producer sarama.SyncProducer) *EventProducer {
 }
 
 func (e *EventProducer) Publish(ctx context.Context, topic string, event base.EventModel) error {
+	log := l.Logger.WithFields(logrus.Fields{
+		infrastructure.TraceIdKey:       ctx.Value(infrastructure.TraceIdKey),
+		infrastructure.AggregateIdKey:   event.AggregateId,
+		infrastructure.AggregateTypeKey: event.AggregateType,
+	})
 	bytes, err := json.Marshal(base.TracedEventModel{
 		TraceId:    ctx.Value(infrastructure.TraceIdKey).(string),
 		EventModel: event,
@@ -36,7 +42,7 @@ func (e *EventProducer) Publish(ctx context.Context, topic string, event base.Ev
 		return err
 	}
 
-	fmt.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", topic, partition, offset)
+	log.Debugf("Message [%s] is stored in topic(%s)/partition(%d)/offset(%d)\n", event.Id, topic, partition, offset)
 
 	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -24,7 +26,13 @@ func (s *EventStore) SaveEvents(
 	events []base.Event,
 	expectedVersion int64,
 ) error {
+	log := l.Logger.WithFields(logrus.Fields{
+		TraceIdKey:       ctx.Value(TraceIdKey),
+		AggregateIdKey:   aggregateId,
+		AggregateTypeKey: aggregateType,
+	})
 
+	log.Infof("saving %d events", len(events))
 	eventStream := s.repository.FindByAggregateId(aggregateId)
 	if expectedVersion != -1 && eventStream[len(eventStream)-1].Version != expectedVersion {
 		return errors.New("concurrency error")
@@ -46,6 +54,7 @@ func (s *EventStore) SaveEvents(
 		_ = s.publisher.Publish(ctx, topic, *model)
 	}
 
+	log.Debugf("saved successfuly")
 	return nil
 }
 

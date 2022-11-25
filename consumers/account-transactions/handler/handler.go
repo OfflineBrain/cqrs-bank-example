@@ -1,6 +1,7 @@
 package handler
 
 import (
+	l "account-transactions/log"
 	"context"
 	"encoding/json"
 	"errors"
@@ -19,8 +20,11 @@ func NewDbWriteHandler(repository AccountRepository) *DbWriteHandler {
 }
 
 func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
+	log := l.Logger.WithField(TraceIdKey, ctx.Value(TraceIdKey))
+
 	switch model.Type {
 	case WithdrawFromAccountV1:
+		log.Debugf("received %s event", WithdrawFromAccountV1)
 		var event WithdrawV1
 		err := json.Unmarshal(model.Data, &event)
 		if err != nil {
@@ -28,6 +32,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 		}
 		return d.repository.DecreaseBalance(model.AggregateId, event.Amount)
 	case DepositToAccountV1:
+		log.Debugf("received %s event", DepositToAccountV1)
 		var event DepositV1
 		err := json.Unmarshal(model.Data, &event)
 		if err != nil {
@@ -35,6 +40,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 		}
 		return d.repository.IncreaseBalance(model.AggregateId, event.Amount)
 	case OpenAccountV1:
+		log.Debugf("received %s event", OpenAccountV1)
 		var event OpenV1
 		err := json.Unmarshal(model.Data, &event)
 		if err != nil {
@@ -49,6 +55,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 		}
 		return d.repository.Save(*a)
 	case CloseAccountV1:
+		log.Debugf("received %s event", CloseAccountV1)
 		var event CloseV1
 		err := json.Unmarshal(model.Data, &event)
 		if err != nil {

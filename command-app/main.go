@@ -7,13 +7,18 @@ import (
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/kafka"
 	er "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/mongo"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/rest"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func main() {
+	l.Logger.Logger.SetLevel(logrus.DebugLevel)
+	l.Logger.Logger.SetFormatter(&logrus.JSONFormatter{})
+
 	client, _ := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017/?connect=direct"))
 	err := client.Ping(context.Background(), readpref.Primary())
 	if err != nil {
