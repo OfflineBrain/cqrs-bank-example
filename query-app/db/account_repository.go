@@ -1,7 +1,26 @@
 package db
 
-import "query-app/db/entity"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"query-app/db/entity"
+)
 
 type AccountRepository interface {
 	Get(id string) (entity.Account, error)
+}
+
+type SpanAccountRepository struct {
+	AccountRepository
+}
+
+func NewSpanAccountRepository(accountRepository AccountRepository) *SpanAccountRepository {
+	return &SpanAccountRepository{AccountRepository: accountRepository}
+}
+
+func (s *SpanAccountRepository) Get(id string) (entity.Account, error) {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
+		totalDbAccessDuration.WithLabelValues("read", "AccountRepository.Get").Observe(f)
+	}))
+	defer timer.ObserveDuration()
+	return s.AccountRepository.Get(id)
 }
