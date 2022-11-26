@@ -3,6 +3,7 @@ package db
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"query-app/db/entity"
+	"query-app/infrastructure/metrics"
 )
 
 type AccountRepository interface {
@@ -19,7 +20,7 @@ func NewSpanAccountRepository(accountRepository AccountRepository) *SpanAccountR
 
 func (s *SpanAccountRepository) Get(id string) (entity.Account, error) {
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
-		totalDbAccessDuration.WithLabelValues("read", "AccountRepository.Get").Observe(f)
+		metrics.TotalDbAccessDuration.WithLabelValues("read", "AccountRepository.Get").Observe(f)
 	}))
 	defer timer.ObserveDuration()
 	return s.AccountRepository.Get(id)

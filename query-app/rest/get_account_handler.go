@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"query-app/infrastructure"
-	l "query-app/log"
+	l "query-app/infrastructure/log"
 	"query-app/usecase"
 )
 

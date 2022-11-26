@@ -6,9 +6,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"query-app/config"
 	"query-app/db"
-	"query-app/infrastructure"
-	"query-app/log"
-	"query-app/pg"
+	pg2 "query-app/db/pg"
+	"query-app/infrastructure/log"
+	"query-app/infrastructure/metrics"
 	"query-app/rest"
 	"query-app/usecase"
 )
@@ -23,8 +23,7 @@ func main() {
 	log.Logger.Logger.SetLevel(logrus.DebugLevel)
 	log.Logger.Logger.SetFormatter(&logrus.JSONFormatter{})
 
-	db.RegisterMetrics()
-	infrastructure.RegisterMetrics()
+	metrics.RegisterMetrics()
 
 	connString := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -34,17 +33,17 @@ func main() {
 		cfg.PgPassword,
 		cfg.PgDatabase,
 	)
-	connection, err := pg.NewPgConnection(connString)
+	connection, err := pg2.NewPgConnection(connString)
 	if err != nil {
 		panic(err)
 	}
 
-	accountRepository := db.NewSpanAccountRepository(pg.NewAccountRepository(connection))
+	accountRepository := db.NewSpanAccountRepository(pg2.NewAccountRepository(connection))
 
 	engine := gin.Default()
 
 	api := engine.Group("/api")
-	api.Use(infrastructure.CommonMiddleware)
+	api.Use(metrics.CommonMiddleware)
 	{
 		v1 := api.Group("/v1")
 		{
@@ -52,7 +51,7 @@ func main() {
 		}
 	}
 
-	engine.GET("/metrics", infrastructure.PrometheusHandler())
+	engine.GET("/metrics", metrics.PrometheusHandler())
 
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
 	_ = engine.Run(addr)

@@ -1,4 +1,4 @@
-package infrastructure
+package metrics
 
 import (
 	"github.com/gin-gonic/gin"
@@ -21,11 +21,21 @@ var (
 		Help:       "Duration of HTTP requests",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, []string{"path", "method", "code"})
+
+	TotalDbAccessDuration = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace:  "db",
+		Name:       "total_duration",
+		Help:       "Duration of DB access",
+		Objectives: nil,
+	}, []string{"operation", "function"})
 )
 
 func RegisterMetrics() {
-	prometheus.MustRegister(totalRequests,
-		totalDuration)
+	prometheus.MustRegister(
+		totalRequests,
+		totalDuration,
+		TotalDbAccessDuration,
+	)
 }
 
 func PrometheusHandler() gin.HandlerFunc {
