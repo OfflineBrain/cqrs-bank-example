@@ -3,9 +3,11 @@ package handler
 import (
 	"account-transactions/db"
 	l "account-transactions/infrastructure/log"
+	"account-transactions/infrastructure/metrics"
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Handler interface {
@@ -18,6 +20,23 @@ type DbWriteHandler struct {
 
 func NewDbWriteHandler(repository db.AccountRepository) *DbWriteHandler {
 	return &DbWriteHandler{repository: repository}
+}
+
+type PromDbWriteHandler struct {
+	Handler
+}
+
+func NewPromDbWriteHandler(handler Handler) *PromDbWriteHandler {
+	return &PromDbWriteHandler{Handler: handler}
+}
+
+func (p PromDbWriteHandler) Handle(ctx context.Context, model EventModel) error {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
+		metrics.TotalDuration.WithLabelValues(model.Type).Observe(f)
+	}))
+	defer timer.ObserveDuration()
+
+	return p.Handler.Handle(ctx, model)
 }
 
 func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {

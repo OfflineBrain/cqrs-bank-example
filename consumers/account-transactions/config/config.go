@@ -12,6 +12,7 @@ type Config struct {
 	PgUser      string `mapstructure:"PG_USER"`
 	PgPassword  string `mapstructure:"PG_PASSWORD"`
 	PgDatabase  string `mapstructure:"PG_DATABASE"`
+	ServerPort  int32  `mapstructure:"SERVER_PORT"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

@@ -2,13 +2,16 @@ package main
 
 import (
 	"account-transactions/config"
-	pg2 "account-transactions/db/pg"
+	"account-transactions/db"
+	"account-transactions/db/pg"
 	"account-transactions/handler"
 	"account-transactions/infrastructure/log"
+	"account-transactions/infrastructure/metrics"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -20,6 +23,8 @@ func main() {
 	if err != nil {
 		return
 	}
+
+	metrics.RegisterMetrics()
 
 	log.SetServiceName(cfg.ServiceName)
 	log.Logger.Logger.SetLevel(logrus.DebugLevel)
@@ -41,13 +46,13 @@ func main() {
 		cfg.PgDatabase,
 		cfg.ServiceName,
 	)
-	connection, err := pg2.NewPgConnection(connString)
+	connection, err := pg.NewPgConnection(connString)
 	if err != nil {
 		panic(err)
 	}
 
-	repository := pg2.NewAccountRepository(connection)
-	writeHandler := handler.NewDbWriteHandler(repository)
+	repository := db.NewPromAccountRepository(pg.NewAccountRepository(connection))
+	writeHandler := handler.NewPromDbWriteHandler(handler.NewDbWriteHandler(repository))
 	consumer, err := worker.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
 		panic(err)
@@ -65,12 +70,14 @@ func main() {
 			select {
 			case err := <-consumer.Errors():
 				log.Logger.Error(err)
+				metrics.KafkaErrors.Inc()
 			case msg := <-consumer.Messages():
 				msgCount++
 				var model handler.TracedEventModel
 				err := json.Unmarshal(msg.Value, &model)
 				if err != nil {
 					log.Logger.Errorf("err unmarshalling %s", err)
+					metrics.KafkaErrors.Inc()
 				}
 				l := log.Logger.WithField(handler.TraceIdKey, model.TraceId)
 				ctx := context.WithValue(context.Background(), handler.TraceIdKey, model.TraceId)
@@ -85,6 +92,11 @@ func main() {
 			}
 		}
 	}()
+
+	engine := gin.Default()
+	engine.GET("/metrics", metrics.PrometheusHandler())
+	addr := fmt.Sprintf(":%d", cfg.ServerPort)
+	_ = engine.Run(addr)
 
 	<-doneCh
 	log.Logger.Info("Processed", msgCount, "messages")
