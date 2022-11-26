@@ -1,7 +1,8 @@
 package handler
 
 import (
-	l "account-transactions/log"
+	"account-transactions/db"
+	l "account-transactions/infrastructure/log"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,10 +13,10 @@ type Handler interface {
 }
 
 type DbWriteHandler struct {
-	repository AccountRepository
+	repository db.AccountRepository
 }
 
-func NewDbWriteHandler(repository AccountRepository) *DbWriteHandler {
+func NewDbWriteHandler(repository db.AccountRepository) *DbWriteHandler {
 	return &DbWriteHandler{repository: repository}
 }
 

@@ -1,7 +1,9 @@
-package handler
+package db
+
+import "account-transactions/handler"
 
 type AccountRepository interface {
-	Save(account Account) error
+	Save(account handler.Account) error
 	IncreaseBalance(id string, amount uint64) error
 	DecreaseBalance(id string, amount uint64) error
 	SetInactive(id string) error
@@ -23,7 +25,7 @@ func (m *NoOpAccountRepository) DecreaseBalance(_ string, _ uint64) error {
 	return nil
 }
 
-func (m *NoOpAccountRepository) Save(_ Account) error {
+func (m *NoOpAccountRepository) Save(_ handler.Account) error {
 	return nil
 }
 

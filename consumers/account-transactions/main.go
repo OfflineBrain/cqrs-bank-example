@@ -2,9 +2,9 @@ package main
 
 import (
 	"account-transactions/config"
+	pg2 "account-transactions/db/pg"
 	"account-transactions/handler"
-	"account-transactions/log"
-	"account-transactions/pg"
+	"account-transactions/infrastructure/log"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -41,12 +41,12 @@ func main() {
 		cfg.PgDatabase,
 		cfg.ServiceName,
 	)
-	connection, err := pg.NewPgConnection(connString)
+	connection, err := pg2.NewPgConnection(connString)
 	if err != nil {
 		panic(err)
 	}
 
-	repository := pg.NewAccountRepository(connection)
+	repository := pg2.NewAccountRepository(connection)
 	writeHandler := handler.NewDbWriteHandler(repository)
 	consumer, err := worker.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
