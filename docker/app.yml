@@ -1,0 +1,112 @@
+version: '3.1'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
+
+  kafka:
+    image: wurstmeister/kafka
+#    ports:
+#      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      DOCKER_API_VERSION: 1.22
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    restart: unless-stopped
+
+  mongo:
+    image: mongo
+    restart: always
+  #    ports:
+  #      - "27017:27017"
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
+
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: bank
+  #    ports:
+  #      - "5432:5432"
+
+  migration:
+    image: flyway/flyway
+    depends_on:
+      - postgres
+    command: -connectRetries=60 migrate
+    volumes:
+      - ./db/migration/sql:/flyway/sql
+      - ./db/migration/conf:/flyway/conf
+
+
+  command-app:
+    build:
+      dockerfile: Dockerfile
+      context: ../command-app/
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_HOST: "kafka"
+      MONGODB_HOST: "mongo"
+    depends_on:
+      - mongo
+      - kafka
+  account-transactions:
+    build:
+      dockerfile: Dockerfile
+      context: ../consumers/account-transactions/
+    environment:
+      KAFKA_HOST: "kafka"
+      PG_HOST: "postgres"
+    depends_on:
+      - postgres
+      - kafka
+  query-app:
+    build:
+      dockerfile: Dockerfile
+      context: ../query-app/
+    ports:
+      - "8082:8082"
+    environment:
+      PG_HOST: "postgres"
+    depends_on:
+      - postgres
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - prometheus-pushgateway
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  prometheus-pushgateway:
+    image: prom/pushgateway
+    expose:
+      - 9091
+    ports:
+      - "9091:9091"
