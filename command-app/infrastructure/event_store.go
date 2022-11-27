@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
-	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/log"
 	"github.com/sirupsen/logrus"
 	"time"
 )

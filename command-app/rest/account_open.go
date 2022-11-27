@@ -7,7 +7,7 @@ import (
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/domain/account"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
-	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/log"
 	"net/http"
 )
 

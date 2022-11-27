@@ -8,8 +8,9 @@ import (
 	"github.com/offlinebrain/cqrs-bank-example/command-app/domain/account"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/kafka"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/log"
+	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/metrics"
 	er "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/mongo"
-	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/rest"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,6 +23,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	metrics.RegisterMetrics()
+
 	l.SetServiceName(cfg.ServiceName)
 	l.Logger.Logger.SetLevel(logrus.DebugLevel)
 	l.Logger.Logger.SetFormatter(&logrus.JSONFormatter{})
@@ -32,7 +36,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	eventRepository := er.NewMongoEventRepository(*client)
+	eventRepository := infrastructure.NewPromMongoEventRepository(er.NewMongoEventRepository(*client))
 
 	kafkaUri := fmt.Sprintf("%s:%d", cfg.KafkaHost, cfg.KafkaPort)
 	producer, err := kafka.NewSyncProducer([]string{kafkaUri})
@@ -50,6 +54,7 @@ func main() {
 	engine := gin.Default()
 
 	api := engine.Group("/api")
+	api.Use(metrics.CommonMiddleware)
 	{
 		v1 := api.Group("/v1")
 		{
@@ -63,6 +68,8 @@ func main() {
 			evensApi.POST("accounts/replay", rest.NewReplayAccountHandler(dispatcher))
 		}
 	}
+
+	engine.GET("/metrics", metrics.PrometheusHandler())
 
 	addr := fmt.Sprintf(":%d", cfg.ServerPort)
 	_ = engine.Run(addr)

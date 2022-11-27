@@ -6,7 +6,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/base"
 	"github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure"
-	l "github.com/offlinebrain/cqrs-bank-example/command-app/log"
+	l "github.com/offlinebrain/cqrs-bank-example/command-app/infrastructure/log"
 	"github.com/sirupsen/logrus"
 )
 
