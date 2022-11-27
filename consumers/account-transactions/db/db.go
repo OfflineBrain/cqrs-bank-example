@@ -1,13 +1,12 @@
 package db
 
 import (
-	"account-transactions/handler"
 	"account-transactions/infrastructure/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type AccountRepository interface {
-	Save(account handler.Account) error
+	Save(account Account) error
 	IncreaseBalance(id string, amount uint64) error
 	DecreaseBalance(id string, amount uint64) error
 	SetInactive(id string) error
@@ -29,7 +28,7 @@ func (m *NoOpAccountRepository) DecreaseBalance(_ string, _ uint64) error {
 	return nil
 }
 
-func (m *NoOpAccountRepository) Save(_ handler.Account) error {
+func (m *NoOpAccountRepository) Save(_ Account) error {
 	return nil
 }
 
@@ -41,7 +40,7 @@ type PromAccountRepository struct {
 	AccountRepository
 }
 
-func (s *PromAccountRepository) Save(account handler.Account) error {
+func (s *PromAccountRepository) Save(account Account) error {
 	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
 		metrics.TotalDbAccessDuration.WithLabelValues("write", "AccountRepository.Save").Observe(f)
 	}))

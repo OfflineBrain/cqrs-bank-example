@@ -22,23 +22,6 @@ func NewDbWriteHandler(repository db.AccountRepository) *DbWriteHandler {
 	return &DbWriteHandler{repository: repository}
 }
 
-type PromDbWriteHandler struct {
-	Handler
-}
-
-func NewPromDbWriteHandler(handler Handler) *PromDbWriteHandler {
-	return &PromDbWriteHandler{Handler: handler}
-}
-
-func (p PromDbWriteHandler) Handle(ctx context.Context, model EventModel) error {
-	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
-		metrics.TotalDuration.WithLabelValues(model.Type).Observe(f)
-	}))
-	defer timer.ObserveDuration()
-
-	return p.Handler.Handle(ctx, model)
-}
-
 func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 	log := l.Logger.WithField(TraceIdKey, ctx.Value(TraceIdKey))
 
@@ -69,7 +52,7 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 			return err
 		}
 
-		a := &Account{
+		a := &db.Account{
 			Id:         model.AggregateId,
 			HolderName: event.HolderName,
 			Balance:    0,
@@ -93,4 +76,21 @@ func (d DbWriteHandler) Handle(ctx context.Context, model EventModel) error {
 	default:
 		return errors.New("event type cannot be handled")
 	}
+}
+
+type PromDbWriteHandler struct {
+	Handler
+}
+
+func NewPromDbWriteHandler(handler Handler) *PromDbWriteHandler {
+	return &PromDbWriteHandler{Handler: handler}
+}
+
+func (p PromDbWriteHandler) Handle(ctx context.Context, model EventModel) error {
+	timer := prometheus.NewTimer(prometheus.ObserverFunc(func(f float64) {
+		metrics.TotalDuration.WithLabelValues(model.Type).Observe(f)
+	}))
+	defer timer.ObserveDuration()
+
+	return p.Handler.Handle(ctx, model)
 }

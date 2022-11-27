@@ -1,7 +1,7 @@
 package pg
 
 import (
-	"account-transactions/handler"
+	"account-transactions/db"
 	"context"
 	"database/sql"
 	"io"
@@ -15,7 +15,7 @@ func NewAccountRepository(conn *sql.DB) *AccountRepository {
 	return &AccountRepository{conn: conn}
 }
 
-func (a *AccountRepository) Save(account handler.Account) error {
+func (a *AccountRepository) Save(account db.Account) error {
 
 	err := RunInTx(context.Background(), a.conn, func(ctx context.Context, tx *sql.Tx) error {
 		stmt, err := tx.PrepareContext(ctx, `INSERT INTO account(id, holder_name, balance, active) VALUES ($1, $2, $3, $4)`)

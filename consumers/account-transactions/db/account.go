@@ -1,4 +1,4 @@
-package handler
+package db
 
 type Account struct {
 	Id         string
